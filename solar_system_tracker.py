@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
 
@@ -7,10 +8,8 @@ import pygame
 import math
 from datetime import datetime, timezone
 
-# Initialize Pygame
 pygame.init()
 
-# Start as a normal window instead of full monitor size.
 WIDTH, HEIGHT = 900, 700
 
 screen = pygame.display.set_mode(
@@ -19,12 +18,10 @@ screen = pygame.display.set_mode(
 )
 pygame.display.set_caption("Real-Time Solar System Tracker")
 
-# Visual Constants
 SUN_SIZE = 35
 PLANET_SCALE_FACTOR = 1.8
 ORBIT_SPACING = 55
 
-# Colors
 BLACK = (5, 5, 12)
 SUN_COLOR = (255, 215, 0)
 WHITE = (250, 250, 250)
@@ -32,7 +29,6 @@ ORBIT_COLOR = (40, 40, 50)
 TEXT_COLOR = (0, 255, 0)
 MOON_COLOR = (200, 200, 200)
 
-# Planet Data
 PLANETS = [
     {"name": "Mercury", "dist": 1, "size": 6,  "color": (169, 169, 169), "L": 252.25, "P": 87.97},
     {"name": "Venus",   "dist": 2, "size": 10, "color": (230, 190, 130), "L": 181.98, "P": 224.7},
@@ -61,12 +57,12 @@ def build_background(width, height):
 
 
 def get_current_angle(l_j2000, period_days):
-    """Calculates real-time heliocentric longitude based on UTC."""
     j2000 = datetime(2000, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     delta_days = (now - j2000).total_seconds() / 86400.0
     angle_deg = (l_j2000 + (360.0 / period_days) * delta_days) % 360
     return math.radians(angle_deg)
+
 
 bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
 
@@ -75,13 +71,12 @@ pygame.display.flip()
 pygame.event.pump()
 pygame.time.delay(100)
 
-# Fonts
 font_label = pygame.font.SysFont("monospace", 18, bold=True)
 font_ui = pygame.font.SysFont("monospace", 24)
 
-# Main Loop
 clock = pygame.time.Clock()
 running = True
+needs_background_rebuild = False
 
 while running:
     for event in pygame.event.get():
@@ -90,11 +85,14 @@ while running:
 
         elif event.type == pygame.VIDEORESIZE:
             WIDTH, HEIGHT = event.w, event.h
-            bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+            needs_background_rebuild = True
+
+    if needs_background_rebuild:
+        bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+        needs_background_rebuild = False
 
     screen.blit(bg_surface, (0, 0))
 
-    # Draw Planets and Moon
     for p in PLANETS:
         orbit_r = SUN_SIZE + (p["dist"] * ORBIT_SPACING)
         angle = get_current_angle(p["L"], p["P"])
@@ -123,14 +121,13 @@ while running:
             txt = font_label.render(p["name"], True, WHITE)
             screen.blit(txt, (px + scaled_size + 5, py - scaled_size - 5))
 
-    # Dynamic UI
     now_utc = datetime.now(timezone.utc)
     dt_str = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
     timer_txt = font_ui.render(dt_str, True, TEXT_COLOR)
     screen.blit(timer_txt, (20, 20))
 
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(60)
 
 pygame.time.delay(100)
 pygame.quit()
