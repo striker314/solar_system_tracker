@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 
 # Initialize Pygame
 pygame.init()
-info = pygame.display.Info()
-WIDTH, HEIGHT = info.current_w, info.current_h
+
+# Start as a normal window instead of full monitor size.
+WIDTH, HEIGHT = 1200, 900
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("Real-Time Solar System Tracker")
@@ -54,7 +55,7 @@ def build_background(width, height):
 
 def get_current_angle(l_j2000, period_days):
     """Calculates real-time heliocentric longitude based on UTC."""
-    j2000 = datetime(2000, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    j2000 = datetime(2000, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     delta_days = (now - j2000).total_seconds() / 86400.0
     angle_deg = (l_j2000 + (360.0 / period_days) * delta_days) % 360
@@ -72,16 +73,15 @@ clock = pygame.time.Clock()
 running = True
 
 while running:
-    screen.blit(bg_surface, (0, 0))
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.VIDEORESIZE:
             WIDTH, HEIGHT = event.w, event.h
-            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
             bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+
+    screen.blit(bg_surface, (0, 0))
 
     # Draw Planets and Moon
     for p in PLANETS:
