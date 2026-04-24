@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import os
+os.environ["SDL_VIDEO_CENTERED"] = "1"
+os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
+
 import pygame
 import math
 from datetime import datetime, timezone
@@ -7,9 +11,12 @@ from datetime import datetime, timezone
 pygame.init()
 
 # Start as a normal window instead of full monitor size.
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 900, 700
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+screen = pygame.display.set_mode(
+    (WIDTH, HEIGHT),
+    pygame.RESIZABLE | pygame.DOUBLEBUF,
+)
 pygame.display.set_caption("Real-Time Solar System Tracker")
 
 # Visual Constants
@@ -61,8 +68,12 @@ def get_current_angle(l_j2000, period_days):
     angle_deg = (l_j2000 + (360.0 / period_days) * delta_days) % 360
     return math.radians(angle_deg)
 
-
 bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+
+screen.blit(bg_surface, (0, 0))
+pygame.display.flip()
+pygame.event.pump()
+pygame.time.delay(100)
 
 # Fonts
 font_label = pygame.font.SysFont("monospace", 18, bold=True)
@@ -121,4 +132,5 @@ while running:
     pygame.display.flip()
     clock.tick(10)
 
+pygame.time.delay(100)
 pygame.quit()
