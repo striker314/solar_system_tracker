@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 import os
+import warnings
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
+
+warnings.filterwarnings(
+    "ignore",
+    message="Your system is avx2 capable but pygame was not built with support for it.*",
+    category=RuntimeWarning,
+)
 
 import pygame
 import math
