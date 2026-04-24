@@ -49,18 +49,32 @@ PLANETS = [
 ]
 
 
+def get_layout_scale(width, height):
+    max_dist = max(p["dist"] for p in PLANETS)
+
+    available_radius = min(width, height) // 2 - 80
+    needed_radius = SUN_SIZE + (max_dist * ORBIT_SPACING)
+
+    return max(0.25, available_radius / needed_radius)
+
+
 def build_background(width, height):
+    scale = get_layout_scale(width, height)
     cx, cy = width // 2, height // 2
+
+    sun_size = max(6, int(SUN_SIZE * scale))
+    orbit_spacing = max(8, int(ORBIT_SPACING * scale))
+
     surface = pygame.Surface((width, height))
     surface.fill(BLACK)
 
-    pygame.draw.circle(surface, SUN_COLOR, (cx, cy), SUN_SIZE)
+    pygame.draw.circle(surface, SUN_COLOR, (cx, cy), sun_size)
 
     for p in PLANETS:
-        orbit_r = SUN_SIZE + (p["dist"] * ORBIT_SPACING)
+        orbit_r = sun_size + (p["dist"] * orbit_spacing)
         pygame.draw.circle(surface, ORBIT_COLOR, (cx, cy), orbit_r, 1)
 
-    return surface, cx, cy
+    return surface, cx, cy, scale, sun_size, orbit_spacing
 
 
 def get_current_angle(l_j2000, period_days):
@@ -71,7 +85,7 @@ def get_current_angle(l_j2000, period_days):
     return math.radians(angle_deg)
 
 
-bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+bg_surface, cx, cy, scale, sun_size, orbit_spacing = build_background(WIDTH, HEIGHT)
 
 screen.blit(bg_surface, (0, 0))
 pygame.display.flip()
@@ -95,23 +109,23 @@ while running:
             needs_background_rebuild = True
 
     if needs_background_rebuild:
-        bg_surface, cx, cy = build_background(WIDTH, HEIGHT)
+        bg_surface, cx, cy, scale, sun_size, orbit_spacing = build_background(WIDTH, HEIGHT)
         needs_background_rebuild = False
 
     screen.blit(bg_surface, (0, 0))
 
     for p in PLANETS:
-        orbit_r = SUN_SIZE + (p["dist"] * ORBIT_SPACING)
+        orbit_r = sun_size + (p["dist"] * orbit_spacing)
         angle = get_current_angle(p["L"], p["P"])
 
         px = cx + math.cos(angle) * orbit_r
         py = cy - math.sin(angle) * orbit_r
 
-        scaled_size = int(p["size"] * PLANET_SCALE_FACTOR)
+        scaled_size = max(2, int(p["size"] * PLANET_SCALE_FACTOR * scale))
         pygame.draw.circle(screen, p["color"], (int(px), int(py)), scaled_size)
 
         if p["name"] == "Earth":
-            moon_dist = 35
+            moon_dist = max(8, int(35 * scale))
             moon_period = 27.32
             moon_angle = get_current_angle(218.3, moon_period)
 
@@ -119,10 +133,15 @@ while running:
             my = py - math.sin(moon_angle) * moon_dist
 
             pygame.draw.circle(screen, (30, 30, 40), (int(px), int(py)), moon_dist, 1)
-            pygame.draw.circle(screen, MOON_COLOR, (int(mx), int(my)), 4)
+            pygame.draw.circle(
+                screen,
+                MOON_COLOR,
+                (int(mx), int(my)),
+                max(2, int(4 * scale)),
+            )
 
             txt = font_label.render(p["name"], True, WHITE)
-            screen.blit(txt, (px - scaled_size - 60, py + scaled_size + 5))
+            screen.blit(txt, (px - scaled_size - int(60 * scale), py + scaled_size + 5))
 
         else:
             txt = font_label.render(p["name"], True, WHITE)
